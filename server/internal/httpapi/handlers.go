@@ -230,7 +230,7 @@ func (s *Server) traceDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if hx(r) {
-		s.render(w, "detail", view{CSRF: sess.CSRF, Detail: toDetail(tr)}, http.StatusOK)
+		s.render(w, "detail", view{CSRF: sess.CSRF, Detail: toDetail(tr, sess.Number)}, http.StatusOK)
 		return
 	}
 	v, err := s.dashboardView(r, sess, store.Flash{})
@@ -238,7 +238,7 @@ func (s *Server) traceDetail(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, err)
 		return
 	}
-	v.Detail = toDetail(tr)
+	v.Detail = toDetail(tr, sess.Number)
 	v.Title = tr.Workflow
 	s.render(w, "dashboard", v, http.StatusOK)
 }

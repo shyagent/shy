@@ -713,7 +713,7 @@ func cleanName(name string) string {
 	}
 	name = strings.TrimSpace(string(r))
 	if name == "" {
-		return "install"
+		return "agent"
 	}
 	return name
 }

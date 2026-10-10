@@ -6,7 +6,8 @@
 #   bash shy.sh [-m model] [task...]
 #
 # Environment:
-#   SHY_API_KEY            install key for shyd (asked for when unset)
+#   SHY_API_KEY            install key for shyd (asked for when unset).
+#                          Also posts the run trace to $SHY_BASE_URL/v1/trace.
 #   SHY_BASE_URL           shyd origin (default: http://127.0.0.1:8080)
 #   OPENAI_BASE_URL        API root to call instead of shyd (includes /v1)
 #   OPENAI_API_KEY         key for OPENAI_BASE_URL
@@ -14,7 +15,7 @@
 #   SHY_MAX_DEPTH          how deep subagents may nest (default: 2)
 #   SHY_MAX_STEPS          model calls per agent run (default: 100)
 #   SHY_BASH_TIMEOUT       default bash tool timeout in seconds (default: 300)
-#   NEATLOGS_API_KEY       turns on tracing to Neatlogs
+#   NEATLOGS_API_KEY       if set, traces go to Neatlogs instead of shyd
 #   NEATLOGS_PROJECT_NAME  dashboard project name, required with nlw_ write keys
 #   NEATLOGS_INGEST_URL    default https://ingest.neatlogs.com (EU: https://eu.ingest.neatlogs.com)
 #   NEATLOGS_SESSION_ID    session id for traces (interactive mode makes one up)
@@ -532,23 +533,34 @@ _jarray() {
   _JRAW=$raw
 }
 
-# ---------------------------------------------------------------- tracing (Neatlogs HTTP ingest)
+# ---------------------------------------------------------------- tracing
 #
-# One nested JSON tree per entry-point invocation, POSTed once when it finishes.
+# One nested JSON tree per run, posted once when it finishes.
+# NEATLOGS_API_KEY sends it to Neatlogs. Otherwise SHY_API_KEY sends it to shyd.
 # Open spans live on a stack so an interrupted run can still be closed and sent.
 
 trace_init() {
   TRACE= SPAN_D=-1 TRACE_ROOT=
+  TRACE_URL= TRACE_KEY=
   SPAN_HEAD=() SPAN_KIDS=() SPAN_T0=()
-  [[ -n ${NEATLOGS_API_KEY:-} ]] || return 0
-  case $NEATLOGS_API_KEY in
-    nlw_*)
-      if [[ -z ${NEATLOGS_PROJECT_NAME:-} ]]; then
-        warn "NEATLOGS_API_KEY is a write key (nlw_); set NEATLOGS_PROJECT_NAME to the dashboard project name. Tracing is off."
-        return 0
-      fi
-      ;;
-  esac
+  if [[ -n ${NEATLOGS_API_KEY:-} ]]; then
+    case $NEATLOGS_API_KEY in
+      nlw_*)
+        if [[ -z ${NEATLOGS_PROJECT_NAME:-} ]]; then
+          warn "NEATLOGS_API_KEY is a write key (nlw_); set NEATLOGS_PROJECT_NAME to the dashboard project name. Tracing is off."
+          return 0
+        fi
+        ;;
+    esac
+    TRACE_URL=$NEATLOGS_INGEST_URL/v1/trace
+    TRACE_KEY=$NEATLOGS_API_KEY
+  elif [[ -n ${SHY_API_KEY:-} ]]; then
+    local base=${SHY_BASE_URL:-http://127.0.0.1:8080}
+    TRACE_URL=${base%/}/v1/trace
+    TRACE_KEY=$SHY_API_KEY
+  else
+    return 0
+  fi
   TRACE=1
 }
 
@@ -627,19 +639,19 @@ trace_send() {
   local f=$SHY_TMP/trace.json res=$SHY_TMP/trace.res code body
   printf '%s' "$TRACE_ROOT" >"$f"
   TRACE_ROOT=
-  code=$(curl -sS --max-time 20 -o "$res" -w '%{http_code}' -X POST "$NEATLOGS_INGEST_URL/v1/trace" \
+  code=$(curl -sS --max-time 20 -o "$res" -w '%{http_code}' -X POST "$TRACE_URL" \
     -H 'Content-Type: application/json' -K - --data-binary @"$f" 2>"$res.err" <<EOF
-header = "x-api-key: $NEATLOGS_API_KEY"
+header = "x-api-key: $TRACE_KEY"
 EOF
   )
   body=
   [[ -f $res ]] && IFS= read -r -d '' body <"$res"
   if [[ $code == 2* ]]; then
-    json_parse "$body" && jget trace_id && note "· neatlogs trace $REPLY"
+    json_parse "$body" && jget trace_id && note "· trace $REPLY"
   else
     [[ -z $body && -f $res.err ]] && IFS= read -r -d '' body <"$res.err"
     oneline "$body" 300
-    warn "neatlogs ingest failed (HTTP ${code:-none}): $REPLY"
+    warn "trace ingest failed (HTTP ${code:-none}): $REPLY"
   fi
   rm -f "$f" "$res" "$res.err"
   return 0
@@ -1488,9 +1500,9 @@ new_session() {
 
 repl() {
   local -a msgs
-  local tracing="off (set NEATLOGS_API_KEY to send traces)"
+  local tracing="off"
   new_session
-  [[ -n $TRACE ]] && tracing="Neatlogs, session $SESSION_ID"
+  [[ -n $TRACE ]] && tracing="on, session $SESSION_ID"
   printf '%sshy %s%s %s· %s · %s%s\n' "$C_BOLD" "$SHY_VERSION" "$C_RST" "$C_DIM" "$MODEL" "$PWD" "$C_RST" >&2
   note "endpoint: $LLM_URL"
   note "tracing: $tracing"

@@ -32,9 +32,10 @@ func TestDashboardAndIngest(t *testing.T) {
 
 	page := createAccount(t, client, ts.URL)
 	number := match(t, page, `data-copy="(\d{16})"`)
-	if !strings.Contains(page, "Write it down") {
+	if !strings.Contains(page, "Copy it and write it down") {
 		t.Fatal("missing new-account banner")
 	}
+	assertAccountRedacted(t, page, number)
 
 	keyPage := postForm(t, client, ts.URL+"/installs", url.Values{
 		"csrf": {match(t, page, `name="csrf" value="([^"]+)"`)},
@@ -43,6 +44,10 @@ func TestDashboardAndIngest(t *testing.T) {
 	key := match(t, keyPage, `shy_[A-Za-z0-9_-]{40,}`)
 	if !strings.Contains(keyPage, key) || !strings.Contains(keyPage, "export SHY_API_KEY="+key) || !strings.Contains(keyPage, "export NEATLOGS_API_KEY="+key) {
 		t.Fatal("install key was not revealed")
+	}
+	wantCmd := "curl github.com/shyagent/shy/shy.sh &gt; shy.sh &amp;&amp; SHY_API_KEY=" + key + " ./shy.sh"
+	if !strings.Contains(keyPage, wantCmd) {
+		t.Fatal("run command was not shown")
 	}
 	if strings.Contains(get(t, client, ts.URL+"/"), key) {
 		t.Fatal("api key survived a reload")
@@ -85,10 +90,12 @@ func TestDashboardAndIngest(t *testing.T) {
 	if !strings.Contains(dash, "chat-turn") || !strings.Contains(dash, "sent") {
 		t.Fatal("dashboard missing the trace")
 	}
+	assertAccountRedacted(t, dash, number)
 	detail := get(t, client, ts.URL+"/traces/"+match(t, dash, `/traces/(\d+)`))
 	if !strings.Contains(detail, "0123456789abcdef0123456789abcdef") || !strings.Contains(detail, "example") {
 		t.Fatal("detail missing neatlogs id or model")
 	}
+	assertAccountRedacted(t, detail, number)
 
 	other := createAccount(t, newClient(t), ts.URL)
 	if strings.Contains(other, "chat-turn") {
@@ -104,6 +111,7 @@ func TestDashboardAndIngest(t *testing.T) {
 	if !strings.Contains(signed, "laptop") {
 		t.Fatal("spaced account number did not sign in")
 	}
+	assertAccountRedacted(t, signed, number)
 
 	id := match(t, signed, `action="/installs/(\d+)/revoke"`)
 	postForm(t, fresh, ts.URL+"/installs/"+id+"/revoke", url.Values{
@@ -380,6 +388,18 @@ func readAll(t *testing.T, res *http.Response) []byte {
 		t.Fatal(err)
 	}
 	return b
+}
+
+func assertAccountRedacted(t *testing.T, page, number string) {
+	t.Helper()
+	stripped := strings.ReplaceAll(page, `data-copy="`+number+`"`, "")
+	pretty := number[0:4] + " " + number[4:8] + " " + number[8:12] + " " + number[12:16]
+	if strings.Contains(stripped, number) || strings.Contains(stripped, pretty) {
+		t.Fatal("account number was shown")
+	}
+	if !strings.Contains(page, "•••• •••• •••• "+number[12:]) {
+		t.Fatal("redacted account number missing")
+	}
 }
 
 func match(t *testing.T, s, expr string) string {

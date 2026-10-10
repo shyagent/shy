@@ -25,8 +25,8 @@
 {{template "top" .}}
 <main class="wrap">
   <p class="mark">shy</p>
-  <h1>Traces for the agent</h1>
-  <p class="lede">shy posts one trace here at the end of each run. This server keeps it and forwards it to Neatlogs. An account is a 16-digit number. Each install has its own key.</p>
+  <h1>An account is a number</h1>
+  <p class="lede">Sixteen digits. No email and no reset. Sign in, create an agent, and run it. Each run shows up here.</p>
   <div class="grid">
     <section class="card">
       <h2>Sign in</h2>
@@ -41,7 +41,7 @@
     </section>
     <section class="card">
       <h2>New account</h2>
-      <p>The number is the password. There is no email and no reset. If you lose it, the account is gone.</p>
+      <p>The number is the only way back in. It is shown once. If you lose it, the account is gone.</p>
       <form method="post" action="/accounts">
         <input type="hidden" name="form" value="{{.FormToken}}">
         <button class="primary" type="submit">Create account</button>
@@ -65,44 +65,58 @@
     </form>
   </header>
 
+  <ol class="steps">
+    <li class="done"><span>1</span> Account</li>
+    <li class="{{if .Installs}}done{{else}}now{{end}}"><span>2</span> Agent</li>
+    <li class="{{if .Traces}}done{{else if .Installs}}now{{end}}"><span>3</span> Run</li>
+    <li class="{{if .Traces}}now{{end}}"><span>4</span> Actions</li>
+  </ol>
+
   {{if .NewAccount}}
   <section class="banner">
     <h2>This is your account</h2>
     <p class="digits">{{.NumberPretty}}</p>
     <button type="button" class="ghost" data-copy="{{.NumberRaw}}">Copy number</button>
-    <p>Write it down. It is the only way back in.</p>
+    <p>Copy it and write it down. It is the only way back in. Next, create an agent.</p>
   </section>
   {{end}}
 
-  <section class="card" id="installs">
-    <h2>Installs</h2>
-    <p class="muted">Model calls go to {{.PublicURL}}/v1/chat/completions with <span class="mono">SHY_API_KEY</span>. Traces go to {{.PublicURL}}/v1/trace with the same key. A trace with no key is stored and forwarded as anonymous. A model call with no key is rejected.</p>
-    {{if .Reveal}}
-    <div class="reveal">
-      <p>Key for {{.Reveal.Name}}. Shown once.</p>
-      <p class="secret">{{.Reveal.Key}}</p>
-      <p>
-        <button type="button" class="ghost" data-copy="{{.Reveal.Key}}">Copy key</button>
-        <button type="button" class="ghost" data-copy="{{.Reveal.Env}}">Copy env</button>
-      </p>
+  {{if .Reveal}}
+  <section class="banner" id="run">
+    <h2>Run {{.Reveal.Name}}</h2>
+    <p>The key is shown once. This command downloads shy and starts it. Actions from the run show up below.</p>
+    <pre class="env">{{.Reveal.Command}}</pre>
+    <p>
+      <button type="button" class="primary" data-copy="{{.Reveal.Command}}">Copy command</button>
+      <button type="button" class="ghost" data-copy="{{.Reveal.Key}}">Copy key</button>
+    </p>
+    <p class="secret">{{.Reveal.Key}}</p>
+    <details>
+      <summary>Environment</summary>
       <pre class="env">{{.Reveal.Env}}</pre>
-      <p class="muted">This server forwards model calls with its own upstream key, and traces with its own Neatlogs key.</p>
-    </div>
-    {{end}}
+      <button type="button" class="ghost" data-copy="{{.Reveal.Env}}">Copy env</button>
+    </details>
+  </section>
+  {{end}}
+
+  <section class="card" id="keys">
+    <h2>API keys</h2>
+    <p class="muted">One key per agent. Calls go to {{.PublicURL}}. The full key appears only when you create the agent.</p>
     <form class="row" method="post" action="/installs">
       <input type="hidden" name="csrf" value="{{.CSRF}}">
-      <label>Name
+      <label>Agent
         <input name="name" maxlength="40" placeholder="laptop" autocomplete="off">
       </label>
-      <button class="primary" type="submit">New install</button>
+      <button class="primary" type="submit">Create agent</button>
     </form>
     {{if not .Installs}}
-    <p class="muted">No installs yet.</p>
+    <p class="muted">No API keys yet.</p>
     {{else}}
+    <div class="tablewrap">
     <table>
       <thead>
         <tr>
-          <th scope="col">Name</th>
+          <th scope="col">Agent</th>
           <th scope="col">Key</th>
           <th scope="col">Created</th>
           <th scope="col">Last seen</th>
@@ -111,7 +125,7 @@
       </thead>
       <tbody>
         {{range .Installs}}
-        <tr>
+        <tr{{if .Revoked}} class="revoked"{{end}}>
           <td>{{.Name}}</td>
           <td class="mono">{{.Prefix}}…</td>
           <td class="mono">{{.Created}}</td>
@@ -120,7 +134,7 @@
             {{if .Revoked}}
             <span class="wait">revoked</span>
             {{else}}
-            <form class="inline" method="post" action="/installs/{{.ID}}/revoke">
+            <form class="inline" method="post" action="/installs/{{.ID}}/revoke" data-confirm="Revoke this key? That agent can no longer call the API.">
               <input type="hidden" name="csrf" value="{{$.CSRF}}">
               <button class="ghost" type="submit">Revoke</button>
             </form>
@@ -130,6 +144,7 @@
         {{end}}
       </tbody>
     </table>
+    </div>
     {{end}}
   </section>
 
@@ -140,34 +155,39 @@
 
 {{define "traces"}}
 <section id="traces" class="card" hx-get="/traces" hx-trigger="every 15s" hx-swap="outerHTML">
-  <h2>Traces</h2>
+  <h2>Actions</h2>
   {{if not .Traces}}
-  <p class="muted">No traces yet.</p>
+  <p class="muted">No actions yet. Run an agent and this list fills in on its own.</p>
   {{else}}
+  <div class="tablewrap">
   <table>
     <thead>
       <tr>
         <th scope="col">When</th>
-        <th scope="col">Workflow</th>
+        <th scope="col">Agent</th>
+        <th scope="col">Action</th>
         <th scope="col">Status</th>
         <th scope="col">Tokens</th>
-        <th scope="col">Install</th>
-        <th scope="col">Neatlogs</th>
+        <th scope="col">Forward</th>
       </tr>
     </thead>
     <tbody>
       {{range .Traces}}
       <tr>
         <td class="mono">{{.When}}</td>
-        <td><a href="/traces/{{.ID}}" hx-get="/traces/{{.ID}}" hx-target="#detail" hx-swap="innerHTML">{{.Workflow}}</a></td>
+        <td>{{.Install}}</td>
+        <td class="action">
+          <a href="/traces/{{.ID}}" hx-get="/traces/{{.ID}}" hx-target="#detail" hx-swap="innerHTML">{{.Workflow}}</a>
+          {{if .Input}}<span class="clip muted">{{.Input}}</span>{{end}}
+        </td>
         <td class="{{tone .Status}}">{{.Status}}</td>
         <td class="mono">{{.Tokens}}</td>
-        <td>{{.Install}}</td>
         <td class="{{tone .Forward}}">{{.Forward}}</td>
       </tr>
       {{end}}
     </tbody>
   </table>
+  </div>
   {{end}}
 </section>
 {{end}}
@@ -194,7 +214,10 @@
   <h3>Output</h3>
   <pre class="preview">{{.Detail.Output}}</pre>
   {{end}}
+  {{if .Detail.Spans}}
+  <h3>What it did</h3>
   {{template "spans" .Detail.Spans}}
+  {{end}}
   <details>
     <summary>Payload</summary>
     <pre>{{.Detail.Raw}}</pre>

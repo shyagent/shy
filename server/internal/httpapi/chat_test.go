@@ -49,6 +49,10 @@ func TestChatForward(t *testing.T) {
 	if !strings.Contains(keyPage, "export SHY_API_KEY="+key) || !strings.Contains(keyPage, "export SHY_BASE_URL=http://shy.example") {
 		t.Fatal("install env did not include the chat settings")
 	}
+	wantCmd := "curl github.com/shyagent/shy/shy.sh &gt; shy.sh &amp;&amp; SHY_BASE_URL=http://shy.example SHY_API_KEY=" + key + " ./shy.sh"
+	if !strings.Contains(keyPage, wantCmd) {
+		t.Fatal("run command did not point at this server")
+	}
 	if !strings.Contains(get(t, client, ts.URL+"/"), "—") {
 		t.Fatal("expected an unused install")
 	}

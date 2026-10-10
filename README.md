@@ -35,6 +35,6 @@ Interactive mode also needs a terminal on `/dev/tty`. One-shot mode (`shy.sh "ta
 
 | Service | Required | Used for |
 | --- | --- | --- |
-| shyd | yes | Model calls. Set `SHY_API_KEY` to an install key from the dashboard. Default origin: `http://127.0.0.1:8080` (`SHY_BASE_URL`). shyd forwards the call to OpenRouter. Default model: `deepseek/deepseek-v4.1-flash` (`SHY_MODEL` or `-m`). |
-| OpenAI-compatible API | no | Set `OPENAI_BASE_URL` and `OPENAI_API_KEY` to send model calls there instead of shyd. `OPENAI_BASE_URL` is the API root, for example `https://openrouter.ai/api/v1` or `https://api.openai.com/v1`. |
-| [Neatlogs](https://neatlogs.com/) | no | Tracing. Off unless `NEATLOGS_API_KEY` is set. Ingest: `$NEATLOGS_INGEST_URL` or `https://ingest.neatlogs.com`. Write keys (`nlw_…`) also need `NEATLOGS_PROJECT_NAME`. |
+| shyd | yes | Model calls, and the trace at the end of a run. Set `SHY_API_KEY` to an agent key from the dashboard. Default origin: `http://127.0.0.1:8080` (`SHY_BASE_URL`). shyd forwards the model call to OpenRouter and stores the trace. Default model: `deepseek/deepseek-v4.1-flash` (`SHY_MODEL` or `-m`). |
+| OpenAI-compatible API | no | Set `OPENAI_BASE_URL` and `OPENAI_API_KEY` to send model calls there instead of shyd. `OPENAI_BASE_URL` is the API root, for example `https://openrouter.ai/api/v1` or `https://api.openai.com/v1`. With `SHY_API_KEY` set and `NEATLOGS_API_KEY` unset, traces still go to shyd. |
+| [Neatlogs](https://neatlogs.com/) | no | Direct tracing, instead of shyd. Off unless `NEATLOGS_API_KEY` is set. Ingest: `$NEATLOGS_INGEST_URL` or `https://ingest.neatlogs.com`. Write keys (`nlw_…`) also need `NEATLOGS_PROJECT_NAME`. |

@@ -8,6 +8,12 @@
     });
   }
 
+  document.addEventListener("submit", function (ev) {
+    var form = ev.target;
+    var msg = form && form.getAttribute && form.getAttribute("data-confirm");
+    if (msg && !window.confirm(msg)) ev.preventDefault();
+  });
+
   document.addEventListener("click", function (ev) {
     var btn = ev.target.closest("[data-copy]");
     if (!btn) return;
