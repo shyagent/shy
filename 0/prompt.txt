@@ -1,0 +1,29 @@
+let's create a server that collects traces and sends them to neatlogs
+
+later, this server will be used for 
+1. user accounts
+2. billing
+3. history of agent actions
+
+stack: 
+**Go, one binary, SQLite (WAL), on a single VPS ** Stdlib `net/http` plus `modernc.org/sqlite` (no cgo) so it cross-compiles and deploys as one file under systemd or Podman.
+
+- **Auth:** mullvad style number for user accounts, per-install API key, hashed in the DB. Add the one-time-token exchange later.
+
+- **Dashboard:** htmx + vanilla css
+
+---
+
+use entire golang sdk
+
+---
+
+allow anonymous trace submissions
+
+---
+
+why is there a server/deploy/shyd.service ?
+
+---
+
+better use compose.yaml

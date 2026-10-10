@@ -1,0 +1,52 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K1673SAZTPT30TY3ME5SZR",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 5,
+  "files_touched": [
+    ".gitignore",
+    "server/.dockerignore",
+    "server/Containerfile",
+    "server/cmd/shyd/main.go",
+    "server/compose.yaml",
+    "server/go.mod",
+    "server/go.sum",
+    "server/internal/config/config.go",
+    "server/internal/config/config_test.go",
+    "server/internal/httpapi/handlers.go",
+    "server/internal/httpapi/ingest.go",
+    "server/internal/httpapi/server.go",
+    "server/internal/httpapi/server_test.go",
+    "server/internal/httpapi/ui/pages.html",
+    "server/internal/httpapi/ui/static/app.css",
+    "server/internal/httpapi/ui/static/app.js",
+    "server/internal/httpapi/ui/static/htmx.LICENSE",
+    "server/internal/httpapi/ui/static/htmx.min.js",
+    "server/internal/httpapi/view.go",
+    "server/internal/neatlogs/forward.go",
+    "server/internal/neatlogs/forward_test.go",
+    "server/internal/neatlogs/replay.go",
+    "server/internal/store/store.go",
+    "server/internal/store/store_test.go",
+    "server/internal/trace/trace.go",
+    "server/internal/trace/trace_test.go",
+    "server/internal/version/version.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 416065,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 19738368,
+    "output_tokens": 205814,
+    "api_call_count": 5
+  }
+}
