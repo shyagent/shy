@@ -15,6 +15,8 @@ services:
         required: false
     environment:
       SHY_PUBLIC_URL: ${SHY_PUBLIC_URL:-http://127.0.0.1:8080}
+      SHY_OPENAI_API_KEY: ${SHY_OPENAI_API_KEY:-}
+      SHY_OPENAI_BASE_URL: ${SHY_OPENAI_BASE_URL:-https://openrouter.ai/api/v1}
       SHY_NEATLOGS_API_KEY: ${SHY_NEATLOGS_API_KEY:-}
       SHY_NEATLOGS_PROJECT_NAME: ${SHY_NEATLOGS_PROJECT_NAME:-}
       SHY_NEATLOGS_INGEST_URL: ${SHY_NEATLOGS_INGEST_URL:-https://ingest.neatlogs.com}

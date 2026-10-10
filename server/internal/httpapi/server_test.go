@@ -41,7 +41,7 @@ func TestDashboardAndIngest(t *testing.T) {
 		"name": {"laptop"},
 	})
 	key := match(t, keyPage, `shy_[A-Za-z0-9_-]{40,}`)
-	if !strings.Contains(keyPage, key) || !strings.Contains(keyPage, "export NEATLOGS_API_KEY="+key) {
+	if !strings.Contains(keyPage, key) || !strings.Contains(keyPage, "export SHY_API_KEY="+key) || !strings.Contains(keyPage, "export NEATLOGS_API_KEY="+key) {
 		t.Fatal("install key was not revealed")
 	}
 	if strings.Contains(get(t, client, ts.URL+"/"), key) {

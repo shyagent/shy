@@ -76,7 +76,7 @@
 
   <section class="card" id="installs">
     <h2>Installs</h2>
-    <p class="muted">shy posts to {{.PublicURL}}/v1/trace. Send the install key as <span class="mono">x-api-key</span> to attribute the trace to this account. A request with no key is stored and forwarded as anonymous.</p>
+    <p class="muted">Model calls go to {{.PublicURL}}/v1/chat/completions with <span class="mono">SHY_API_KEY</span>. Traces go to {{.PublicURL}}/v1/trace with the same key. A trace with no key is stored and forwarded as anonymous. A model call with no key is rejected.</p>
     {{if .Reveal}}
     <div class="reveal">
       <p>Key for {{.Reveal.Name}}. Shown once.</p>
@@ -86,7 +86,7 @@
         <button type="button" class="ghost" data-copy="{{.Reveal.Env}}">Copy env</button>
       </p>
       <pre class="env">{{.Reveal.Env}}</pre>
-      <p class="muted">Unset any Neatlogs key in that shell. This server forwards with its own key.</p>
+      <p class="muted">This server forwards model calls with its own upstream key, and traces with its own Neatlogs key.</p>
     </div>
     {{end}}
     <form class="row" method="post" action="/installs">

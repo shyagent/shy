@@ -9,7 +9,7 @@ shy exits at startup if any of these are missing.
 | Dependency | Notes |
 | --- | --- |
 | [bash](https://www.gnu.org/software/bash/) 3.2+ | Interpreter (`#!/usr/bin/env bash`). JSON is parsed in bash, so [jq](https://jqlang.org/) is not used. |
-| [curl](https://curl.se/) | OpenRouter chat completions, the `webfetch` tool, and optional Neatlogs ingest. Checked with `command -v curl`. |
+| [curl](https://curl.se/) | Model calls, the `webfetch` tool, and optional Neatlogs ingest. Checked with `command -v curl`. |
 | `mktemp` | Creates the working directory (`mktemp -d`). Startup fails if that directory cannot be created. |
 | `/usr/bin/env` | Resolves `bash` from the shebang. |
 
@@ -35,5 +35,6 @@ Interactive mode also needs a terminal on `/dev/tty`. One-shot mode (`shy.sh "ta
 
 | Service | Required | Used for |
 | --- | --- | --- |
-| [OpenRouter](https://openrouter.ai/) | yes | Model calls. Set `OPENROUTER_API_KEY`. Default model: `deepseek/deepseek-v4.1-flash` (`SHY_MODEL` or `-m`). Endpoint: `$OPENROUTER_BASE_URL` or `https://openrouter.ai/api/v1`. |
+| shyd | yes | Model calls. Set `SHY_API_KEY` to an install key from the dashboard. Default origin: `http://127.0.0.1:8080` (`SHY_BASE_URL`). shyd forwards the call to OpenRouter. Default model: `deepseek/deepseek-v4.1-flash` (`SHY_MODEL` or `-m`). |
+| OpenAI-compatible API | no | Set `OPENAI_BASE_URL` and `OPENAI_API_KEY` to send model calls there instead of shyd. `OPENAI_BASE_URL` is the API root, for example `https://openrouter.ai/api/v1` or `https://api.openai.com/v1`. |
 | [Neatlogs](https://neatlogs.com/) | no | Tracing. Off unless `NEATLOGS_API_KEY` is set. Ingest: `$NEATLOGS_INGEST_URL` or `https://ingest.neatlogs.com`. Write keys (`nlw_…`) also need `NEATLOGS_PROJECT_NAME`. |

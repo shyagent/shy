@@ -110,7 +110,7 @@ func buildView(cfg config.Config, sess store.Session, flash store.Flash, install
 		v.Reveal = &revealView{
 			Name: name,
 			Key:  flash.Key,
-			Env:  "export NEATLOGS_INGEST_URL=" + public + "\nexport NEATLOGS_API_KEY=" + flash.Key,
+			Env:  "export SHY_BASE_URL=" + public + "\nexport SHY_API_KEY=" + flash.Key + "\nexport NEATLOGS_INGEST_URL=" + public + "\nexport NEATLOGS_API_KEY=" + flash.Key,
 		}
 	}
 	return v

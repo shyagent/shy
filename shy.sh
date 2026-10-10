@@ -6,7 +6,10 @@
 #   bash shy.sh [-m model] [task...]
 #
 # Environment:
-#   OPENROUTER_API_KEY     OpenRouter key (asked for when unset)
+#   SHY_API_KEY            install key for shyd (asked for when unset)
+#   SHY_BASE_URL           shyd origin (default: http://127.0.0.1:8080)
+#   OPENAI_BASE_URL        API root to call instead of shyd (includes /v1)
+#   OPENAI_API_KEY         key for OPENAI_BASE_URL
 #   SHY_MODEL              model id (default: deepseek/deepseek-v4.1-flash)
 #   SHY_MAX_DEPTH          how deep subagents may nest (default: 2)
 #   SHY_MAX_STEPS          model calls per agent run (default: 100)
@@ -28,7 +31,9 @@ setup() {
   MAX_DEPTH=${SHY_MAX_DEPTH:-2}
   MAX_STEPS=${SHY_MAX_STEPS:-100}
   BASH_TIMEOUT=${SHY_BASH_TIMEOUT:-300}
-  OPENROUTER_URL=${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+  LLM_URL=
+  LLM_KEY=
+  LLM_PROVIDER=shyd
   NEATLOGS_INGEST_URL=${NEATLOGS_INGEST_URL:-https://ingest.neatlogs.com}
   MAX_BYTES=51200
   MAX_LINES=2000
@@ -1127,9 +1132,9 @@ llm_request() { # tools
   while :; do
     attempt=$((attempt + 1))
     rm -f "$out"
-    curl -sS --max-time 900 -o "$out" -w '%{http_code}' -X POST "$OPENROUTER_URL/chat/completions" \
+    curl -sS --max-time 900 -o "$out" -w '%{http_code}' -X POST "$LLM_URL/chat/completions" \
       -K - --data-binary @"$req" >"$out.code" 2>"$out.err" <<EOF &
-header = "Authorization: Bearer $OPENROUTER_API_KEY"
+header = "Authorization: Bearer $LLM_KEY"
 header = "Content-Type: application/json"
 header = "X-Title: shy"
 EOF
@@ -1254,7 +1259,7 @@ EOF
   if [[ -n $TRACE ]]; then
     json_esc "$model"
     extra="\"model\":$REPLY,\"tokens\":{\"prompt\":$pt,\"completion\":$ct,\"total\":$tt}"
-    attrs='"neatlogs.llm.provider":"openrouter"'
+    attrs="\"neatlogs.llm.provider\":\"$LLM_PROVIDER\""
     if [[ -n $L_FINISH ]]; then
       json_esc "$L_FINISH"
       attrs+=",\"neatlogs.llm.finish_reason\":$REPLY"
@@ -1411,14 +1416,40 @@ on_exit() {
 }
 
 ensure_api_key() {
-  [[ -n ${OPENROUTER_API_KEY:-} ]] && return 0
-  [[ -n $HAVE_TTY ]] || die "OPENROUTER_API_KEY is not set and there is no terminal to ask for it."
-  printf '%sOpenRouter API key%s (https://openrouter.ai/keys, input hidden): ' "$C_BOLD" "$C_RST" >/dev/tty
-  IFS= read -r -s OPENROUTER_API_KEY </dev/tty
-  printf '\n' >/dev/tty
-  OPENROUTER_API_KEY=${OPENROUTER_API_KEY//[[:space:]]/}
-  [[ -n $OPENROUTER_API_KEY ]] || die "no API key given."
-  note "Tip: export OPENROUTER_API_KEY to skip this prompt."
+  if [[ -n ${OPENROUTER_API_KEY:-} || -n ${OPENROUTER_BASE_URL:-} ]]; then
+    warn "OPENROUTER_API_KEY and OPENROUTER_BASE_URL are ignored. Use SHY_API_KEY, or OPENAI_BASE_URL and OPENAI_API_KEY."
+  fi
+  if [[ -n ${OPENAI_BASE_URL:-} ]]; then
+    LLM_URL=${OPENAI_BASE_URL%/}
+    case $LLM_URL in
+      *openrouter.ai*) LLM_PROVIDER=openrouter ;;
+      *) LLM_PROVIDER=openai ;;
+    esac
+    if [[ -z ${OPENAI_API_KEY:-} ]]; then
+      [[ -n $HAVE_TTY ]] || die "OPENAI_API_KEY is not set and there is no terminal to ask for it."
+      printf '%sOpenAI API key%s (input hidden): ' "$C_BOLD" "$C_RST" >/dev/tty
+      IFS= read -r -s OPENAI_API_KEY </dev/tty
+      printf '\n' >/dev/tty
+      OPENAI_API_KEY=${OPENAI_API_KEY//[[:space:]]/}
+      [[ -n $OPENAI_API_KEY ]] || die "no API key given."
+      note "Tip: export OPENAI_API_KEY to skip this prompt."
+    fi
+    LLM_KEY=$OPENAI_API_KEY
+    return 0
+  fi
+  local base=${SHY_BASE_URL:-http://127.0.0.1:8080}
+  LLM_URL=${base%/}/v1
+  LLM_PROVIDER=shyd
+  if [[ -z ${SHY_API_KEY:-} ]]; then
+    [[ -n $HAVE_TTY ]] || die "SHY_API_KEY is not set and there is no terminal to ask for it."
+    printf '%sshy API key%s (input hidden): ' "$C_BOLD" "$C_RST" >/dev/tty
+    IFS= read -r -s SHY_API_KEY </dev/tty
+    printf '\n' >/dev/tty
+    SHY_API_KEY=${SHY_API_KEY//[[:space:]]/}
+    [[ -n $SHY_API_KEY ]] || die "no API key given."
+    note "Tip: export SHY_API_KEY to skip this prompt."
+  fi
+  LLM_KEY=$SHY_API_KEY
 }
 
 read_prompt() {
@@ -1461,6 +1492,7 @@ repl() {
   new_session
   [[ -n $TRACE ]] && tracing="Neatlogs, session $SESSION_ID"
   printf '%sshy %s%s %s· %s · %s%s\n' "$C_BOLD" "$SHY_VERSION" "$C_RST" "$C_DIM" "$MODEL" "$PWD" "$C_RST" >&2
+  note "endpoint: $LLM_URL"
   note "tracing: $tracing"
   note "/help for commands, Ctrl-C interrupts, Ctrl-D exits"
   set -o history 2>/dev/null
@@ -1484,7 +1516,7 @@ repl() {
         ;;
       /help)
         note "/new      start a new conversation"
-        note "/model X  switch to model X (OpenRouter id)"
+        note "/model X  switch to model X"
         note "/exit     quit (or Ctrl-D)"
         note "End a line with \\ to keep typing on the next line."
         continue
@@ -1506,7 +1538,7 @@ Usage: shy.sh [options] [task...]
   Without one, starts an interactive session.
 
 Options:
-  -m, --model ID   OpenRouter model id (default: $MODEL)
+  -m, --model ID   model id (default: $MODEL)
   -h, --help       show this help
   -v, --version    print the version
 

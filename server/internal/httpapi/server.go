@@ -6,6 +6,7 @@ import (
 	"crypto/subtle"
 	"embed"
 	"encoding/base64"
+	"errors"
 	"html/template"
 	"io/fs"
 	"log/slog"
@@ -25,6 +26,11 @@ const (
 	formCookie    = "shy_form"
 	sessionMaxAge = 30 * 24 * 3600
 	formMaxAge    = 12 * 3600
+
+	// ChatTimeout is the budget for one proxied completion, including the body.
+	// main sets the HTTP write timeout a minute longer so a timeout can still
+	// be written back to the client.
+	ChatTimeout = 15 * time.Minute
 )
 
 //go:embed ui/pages.html
@@ -46,13 +52,14 @@ type Options struct {
 
 // Server is the HTTP API and the dashboard.
 type Server struct {
-	cfg     config.Config
-	store   *store.Store
-	forward neatlogs.Forwarder
-	tpl     *template.Template
-	static  http.Handler
-	signIn  *limiter
-	signUp  *limiter
+	cfg      config.Config
+	store    *store.Store
+	forward  neatlogs.Forwarder
+	tpl      *template.Template
+	static   http.Handler
+	signIn   *limiter
+	signUp   *limiter
+	upstream *http.Client
 }
 
 // New parses templates and returns a server. It does not listen.
@@ -92,15 +99,35 @@ func New(opt Options) (*Server, error) {
 			w.Header().Set("Cache-Control", "public, max-age=3600")
 			files.ServeHTTP(w, r)
 		}),
-		signIn: &limiter{limit: opt.LoginLimit, window: opt.LoginWindow, hits: map[string][]time.Time{}},
-		signUp: &limiter{limit: opt.RegisterLimit, window: opt.RegisterWindow, hits: map[string][]time.Time{}},
+		signIn:   &limiter{limit: opt.LoginLimit, window: opt.LoginWindow, hits: map[string][]time.Time{}},
+		signUp:   &limiter{limit: opt.RegisterLimit, window: opt.RegisterWindow, hits: map[string][]time.Time{}},
+		upstream: newUpstreamClient(),
 	}, nil
+}
+
+func newUpstreamClient() *http.Client {
+	client := &http.Client{
+		Timeout: ChatTimeout,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return errors.New("redirects are not followed")
+		},
+	}
+	base, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		return client
+	}
+	tr := base.Clone()
+	tr.DisableCompression = true
+	tr.ResponseHeaderTimeout = ChatTimeout
+	client.Transport = tr
+	return client
 }
 
 // Handler is the full mux, including security headers.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", s.health)
+	mux.HandleFunc("POST /v1/chat/completions", s.chatCompletions)
 	mux.HandleFunc("POST /v1/trace", s.ingest)
 	mux.Handle("GET /static/", http.StripPrefix("/static/", s.static))
 	mux.HandleFunc("GET /{$}", s.home)

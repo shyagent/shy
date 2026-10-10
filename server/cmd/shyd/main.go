@@ -63,6 +63,13 @@ func main() {
 		slog.Warn("SHY_NEATLOGS_API_KEY is unset; traces are stored and not forwarded")
 	}
 
+	chat := "off"
+	if cfg.OpenAIAPIKey != "" {
+		chat = cfg.OpenAIBaseURL
+	} else {
+		slog.Warn("SHY_OPENAI_API_KEY is unset; chat completions are not forwarded")
+	}
+
 	app, err := httpapi.New(httpapi.Options{Config: cfg, Store: st, Forward: fwd})
 	if err != nil {
 		slog.Error("http", "err", err)
@@ -74,7 +81,7 @@ func main() {
 		Handler:           app.Handler(),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       60 * time.Second,
-		WriteTimeout:      60 * time.Second,
+		WriteTimeout:      httpapi.ChatTimeout + time.Minute,
 		IdleTimeout:       120 * time.Second,
 		MaxHeaderBytes:    1 << 16,
 	}
@@ -87,7 +94,7 @@ func main() {
 		_ = srv.Shutdown(shut)
 	}()
 
-	slog.Info("listening", "addr", cfg.Addr, "db", cfg.DBPath, "mode", mode, "version", version.Version)
+	slog.Info("listening", "addr", cfg.Addr, "db", cfg.DBPath, "mode", mode, "chat", chat, "version", version.Version)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("server", "err", err)
 		os.Exit(1)
@@ -95,23 +102,30 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, `shyd %s — collect shy traces and forward them with the Neatlogs Go SDK.
+	fmt.Fprintf(os.Stderr, `shyd %s — collect shy traces, forward them to Neatlogs, and proxy chat completions.
 
 Listens on SHY_HTTP_ADDR (default :8080). The SQLite file is SHY_DB_PATH (default shy.db).
 
-Point shy at this server. An install key attributes the trace to an account.
-A request with no key is accepted as anonymous.
+Point shy at this server. An install key attributes traces and authorizes model calls.
+A trace with no key is accepted as anonymous. A model call with no key is rejected.
 
+  export SHY_BASE_URL=http://127.0.0.1:8080
+  export SHY_API_KEY=shy_...
   export NEATLOGS_INGEST_URL=http://127.0.0.1:8080
   export NEATLOGS_API_KEY=shy_...
+
+Chat completions are POST /v1/chat/completions. The body is forwarded to
+SHY_OPENAI_BASE_URL with SHY_OPENAI_API_KEY. The default upstream is OpenRouter.
 
 Environment:
   SHY_HTTP_ADDR              listen address (default :8080)
   SHY_DB_PATH                SQLite file (default shy.db)
   SHY_PUBLIC_URL             base URL shown in the dashboard
+  SHY_OPENAI_API_KEY         upstream key for chat completions
+  SHY_OPENAI_BASE_URL        upstream API root (default https://openrouter.ai/api/v1)
   SHY_NEATLOGS_API_KEY       project key sent as x-api-key by the Go SDK
   SHY_NEATLOGS_PROJECT_NAME  required for nlw_ write keys; sent as a resource tag
   SHY_NEATLOGS_INGEST_URL    OTLP base URL (default https://ingest.neatlogs.com)
-  SHY_BODY_LIMIT             max trace body in bytes (default 8388608, max 52428800)
+  SHY_BODY_LIMIT             max trace and chat body in bytes (default 8388608, max 52428800)
 `, version.Version)
 }
