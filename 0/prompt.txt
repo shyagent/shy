@@ -1,0 +1,11 @@
+let's add .env file support for shyd compose.yaml
+
+---
+
+the shyd service will be served behind caddy proxy
+
+---
+
+the shyd service will be served behind caddy proxy
+
+caddy is already in place, just remove all the redundant functionality like https

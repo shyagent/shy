@@ -1,0 +1,77 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K2Y0M562MEWEGMZ0X6W325",
+  "session_id": "edebfcba-aa31-4558-94ce-556aa8b8e0f8",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T14:19:46.19018Z",
+  "branch": "main",
+  "checkpoints_count": 3,
+  "save_step_count": 3,
+  "files_touched": [
+    "server/.dockerignore",
+    "server/.env.example",
+    "server/cmd/shyd/main.go",
+    "server/compose.yaml",
+    "server/internal/config/config.go",
+    "server/internal/config/config_test.go",
+    "server/internal/httpapi/handlers.go",
+    "server/internal/httpapi/server.go"
+  ],
+  "agent": "Cursor",
+  "model": "grok-4.7-high-fast",
+  "turn_id": "c787ae16dd69",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 131572,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 3049728,
+    "output_tokens": 60464,
+    "api_call_count": 3
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T14:19:46.185419Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 11,
+    "human_removed": 27,
+    "total_committed": 21,
+    "total_lines_changed": 38,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 30,
+      "agent_lines_removed": 2
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 11,
+      "user_lines_removed": 38,
+      "agent_lines_added": 118,
+      "agent_lines_removed": 8,
+      "user_added_per_file": {
+        "server/.env.example": 6,
+        "server/compose.yaml": 5
+      },
+      "user_removed_per_file": {
+        "server/.env.example": 14,
+        "server/compose.yaml": 24
+      }
+    }
+  ]
+}
