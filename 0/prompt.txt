@@ -1,0 +1,15 @@
+Let's build a bash-only harness, the only dependency is curl (no jq!)
+
+it should be a single file the user can curl | bash into a fresh machine 
+
+read OPENROUTER_API_KEY or ask user to provide it
+
+list of tools (similar to Pi):
+- read
+- edit
+- write
+- bash
+- webfetch (curl underneath)
+- subagent (with all the tools)
+
+don't forget to send traces to NeatLogs (NEATLOGS_INTEGRATION.md )
