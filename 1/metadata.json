@@ -1,0 +1,57 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K7WXWM1PXNH6060M59RD7K",
+  "session_id": "7825e45d-e5a2-49b5-bbc5-59574ed7e346",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T15:46:34.09364Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "README.md",
+    "server/internal/httpapi/chat_test.go",
+    "server/internal/httpapi/server_test.go",
+    "server/internal/httpapi/ui/pages.html",
+    "server/internal/httpapi/ui/static/app.css",
+    "server/internal/httpapi/ui/static/app.js",
+    "server/internal/httpapi/view.go",
+    "server/internal/httpapi/view_test.go",
+    "server/internal/store/store.go",
+    "shy.sh"
+  ],
+  "agent": "Cursor",
+  "model": "grok-4.7-high-fast",
+  "turn_id": "eb780a79df05",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 215238,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 7108864,
+    "output_tokens": 48417,
+    "api_call_count": 1
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T15:46:34.080571Z",
+    "agent_lines": 338,
+    "agent_removed": 96,
+    "human_added": 2,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 340,
+    "total_lines_changed": 438,
+    "agent_percentage": 99.08675799086758,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}

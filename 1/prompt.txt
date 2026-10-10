@@ -1,0 +1,8 @@
+let's develop dashboard UI and API keys table
+
+user flow:
+
+1. sign up via mullvad style
+2. create agent(s)
+3. show `curl github.com/shyagent/shy/shy.sh > shy.sh && SHY_API_KEY=... ./shy.sh`
+4. track agent actions
