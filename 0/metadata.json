@@ -1,0 +1,52 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4JVWCR6REFFPG1WSARNDNWE",
+  "session_id": "4737327b-0884-4993-a404-76a327e3173c",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T12:16:34.326452Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "README.md"
+  ],
+  "agent": "Cursor",
+  "model": "grok-4.7-high-fast",
+  "turn_id": "61cf9cd1e9d2",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 42554,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 97664,
+    "output_tokens": 4330,
+    "api_call_count": 1
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T12:16:34.322857Z",
+    "agent_lines": 39,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 39,
+    "total_lines_changed": 39,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 455,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "NEATLOGS_INTEGRATION.md": 287,
+        "send_a_first_trace.sh": 168
+      }
+    }
+  ]
+}

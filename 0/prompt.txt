@@ -1,0 +1,1 @@
+list all the dependencies in shy.sh  in README.md
