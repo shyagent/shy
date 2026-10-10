@@ -660,14 +660,15 @@ EOF
 # ---------------------------------------------------------------- tools
 
 tools_setup() {
-  local read edit write bash fetch sub
+  local read edit write bash fetch man sub
   read='{"type":"function","function":{"name":"read","description":"Read the contents of a text file. Output is truncated to 2000 lines or 50KB, whichever comes first; use offset and limit to page through large files.","parameters":{"type":"object","properties":{"path":{"type":"string","description":"Path to the file (relative or absolute)"},"offset":{"type":"integer","description":"Line number to start reading from (1-indexed)"},"limit":{"type":"integer","description":"Maximum number of lines to read"}},"required":["path"]}}}'
   edit='{"type":"function","function":{"name":"edit","description":"Edit a file by replacing exact text. oldText must match exactly one location in the file, including whitespace and indentation. Use this for precise, surgical edits.","parameters":{"type":"object","properties":{"path":{"type":"string","description":"Path to the file (relative or absolute)"},"oldText":{"type":"string","description":"Exact text to find and replace"},"newText":{"type":"string","description":"Text to replace it with"}},"required":["path","oldText","newText"]}}}'
   write='{"type":"function","function":{"name":"write","description":"Write content to a file. Creates the file if it does not exist and overwrites it if it does. Parent directories are created automatically.","parameters":{"type":"object","properties":{"path":{"type":"string","description":"Path to the file (relative or absolute)"},"content":{"type":"string","description":"Full content to write"}},"required":["path","content"]}}}'
   bash='{"type":"function","function":{"name":"bash","description":"Run a bash command in the current working directory. Returns stdout and stderr combined, truncated to the last 50KB. Commands do not share state; stdin is empty.","parameters":{"type":"object","properties":{"command":{"type":"string","description":"Bash command to run"},"timeout":{"type":"integer","description":"Timeout in seconds (default 300)"}},"required":["command"]}}}'
   fetch='{"type":"function","function":{"name":"webfetch","description":"Fetch a URL over HTTP(S). HTML pages are converted to plain text; set raw to true to get the original body. Output is truncated to 50KB.","parameters":{"type":"object","properties":{"url":{"type":"string","description":"http:// or https:// URL"},"raw":{"type":"boolean","description":"Return the body without HTML-to-text conversion"}},"required":["url"]}}}'
-  sub='{"type":"function","function":{"name":"subagent","description":"Hand a self-contained task to a subagent that starts with a fresh context and has the same tools (read, edit, write, bash, webfetch, subagent). Returns the final answer of the subagent. Use it for broad exploration or independent sub-tasks so your own context stays small. The subagent cannot see this conversation, so describe the task completely.","parameters":{"type":"object","properties":{"task":{"type":"string","description":"Complete description of the task and what to report back"}},"required":["task"]}}}'
-  TOOLS_BASE="$read,$edit,$write,$bash,$fetch"
+  man='{"type":"function","function":{"name":"man","description":"Show a manual page as plain text. Use this for command, syscall, and library documentation. Output is truncated to 2000 lines or 50KB, whichever comes first; use offset and limit to read further.","parameters":{"type":"object","properties":{"page":{"type":"string","description":"Manual page name, for example printf, open, or git-commit"},"section":{"type":"string","description":"Manual section, for example 1, 2, 3, or 3p. Omit for the first match."},"offset":{"type":"integer","description":"Line number to start from (1-indexed)"},"limit":{"type":"integer","description":"Maximum number of lines to return"}},"required":["page"]}}}'
+  sub='{"type":"function","function":{"name":"subagent","description":"Hand a self-contained task to a subagent that starts with a fresh context and has the same tools (read, edit, write, bash, webfetch, man, subagent). Returns the final answer of the subagent. Use it for broad exploration or independent sub-tasks so your own context stays small. The subagent cannot see this conversation, so describe the task completely.","parameters":{"type":"object","properties":{"task":{"type":"string","description":"Complete description of the task and what to report back"}},"required":["task"]}}}'
+  TOOLS_BASE="$read,$edit,$write,$bash,$fetch,$man"
   TOOLS_ALL="$TOOLS_BASE,$sub"
 }
 
@@ -966,6 +967,164 @@ html_to_text() {
   IFS=$' \t\n'
 }
 
+# Manual pages are overstruck (a character, a backspace, that character again).
+# col -bx keeps the last character in each column. Without col, sed deletes the
+# character before each backspace; the user locale makes "." one character.
+tool_man() {
+  local page section offset limit out line text= lineno=0 shown=0 bytes=0 more=
+  local bs=$'\b' err paths rest path dir sec shown_sec others seen= blank hdr hn
+  local -a margs
+  jget page || jget name
+  page=$REPLY
+  jget section
+  section=$REPLY
+  jget offset
+  int_arg "$REPLY" 1
+  offset=$REPLY
+  jget limit
+  int_arg "$REPLY" "$MAX_LINES"
+  limit=$REPLY
+  ((offset < 1)) && offset=1
+  ((limit < 1 || limit > MAX_LINES)) && limit=$MAX_LINES
+  [[ -n $page ]] || { tool_fail "page is required"; return; }
+  case $page in
+    . | .. | -* | *[!A-Za-z0-9._+:@-]*)
+      [[ $page == '[' || $page == ']' ]] || { tool_fail "page must be a manual name such as printf or git-commit"; return; }
+      ;;
+  esac
+  ((${#page} > 128)) && { tool_fail "page must be a manual name such as printf or git-commit"; return; }
+  case $section in
+    '' | [nNlL] | [0-9]*)
+      case $section in
+        *[!0-9A-Za-z]*) tool_fail "section must be a manual section such as 1, 3, or 3p"; return ;;
+      esac
+      ((${#section} > 6)) && { tool_fail "section must be a manual section such as 1, 3, or 3p"; return; }
+      ;;
+    *) tool_fail "section must be a manual section such as 1, 3, or 3p"; return ;;
+  esac
+  command -v man >/dev/null 2>&1 || { tool_fail "man is not installed"; return; }
+  margs=(-P cat)
+  [[ -n $section ]] && margs+=("$section")
+  margs+=("$page")
+  out=$SHY_TMP/man.$RANDOM$RANDOM
+  (
+    locale_user
+    export MANPAGER=cat PAGER=cat MANWIDTH=80 GROFF_NO_SGR=1
+    set -o pipefail
+    if command -v col >/dev/null 2>&1; then
+      command man "${margs[@]}" | command col -bx
+    else
+      command man "${margs[@]}" | command sed "s/.${bs}//g"
+    fi
+  ) >"$out" 2>"$out.err" &
+  spin_wait $! "reading"
+  if [[ -n $INTERRUPTED ]]; then
+    rm -f "$out" "$out.err"
+    tool_fail "Interrupted by user"
+    return
+  fi
+  # col prints a newline when man produced nothing, so size alone is not enough.
+  blank=1
+  if [[ -s $out ]]; then
+    while IFS= read -r line || [[ -n $line ]]; do
+      [[ -n ${line//[[:space:]]/} ]] && { blank=; break; }
+    done <"$out"
+  fi
+  if [[ -n $blank ]]; then
+    IFS= read -r err <"$out.err"
+    rm -f "$out" "$out.err"
+    if [[ -n $section ]]; then
+      err="No manual entry for $page in section $section"
+    elif [[ -z $err ]]; then
+      err="No manual entry for $page"
+    else
+      oneline "$err" 300
+      err=$REPLY
+    fi
+    tool_fail "$err"
+    return
+  fi
+  # Some man implementations ignore an unknown section and print another page.
+  if [[ -n $section ]]; then
+    hdr= hn=0
+    while IFS= read -r line || [[ -n $line ]]; do
+      hdr+=$line$'\n'
+      case $hdr in
+        *"($section)"*) break ;;
+      esac
+      hn=$((hn + 1))
+      ((hn >= 8)) && break
+    done <"$out"
+    case $hdr in
+      *"($section)"*) ;;
+      *)
+        rm -f "$out" "$out.err"
+        tool_fail "No manual entry for $page in section $section"
+        return
+        ;;
+    esac
+  fi
+  paths=$(
+    locale_user
+    command man -aw "$page" 2>/dev/null
+  ) || true
+  shown_sec=$section
+  rest=$paths
+  while [[ -n $rest ]]; do
+    path=${rest%%$'\n'*}
+    if [[ $path == "$rest" ]]; then rest=; else rest=${rest:${#path}+1}; fi
+    dir=${path%/*}
+    sec=${dir##*/}
+    case $sec in
+      man*) sec=${sec#man} ;;
+      *) continue ;;
+    esac
+    [[ -n $sec ]] || continue
+    if [[ -z $shown_sec ]]; then
+      shown_sec=$sec
+      continue
+    fi
+    [[ $sec == "$shown_sec" ]] && continue
+    case ", $seen," in
+      *", $sec,"*) continue ;;
+    esac
+    if [[ -z $seen ]]; then seen=$sec; else seen+=", $sec"; fi
+  done
+  others=$seen
+  while IFS= read -r line || [[ -n $line ]]; do
+    lineno=$((lineno + 1))
+    ((lineno < offset)) && continue
+    if ((shown >= limit || bytes + ${#line} + 1 > MAX_BYTES)); then
+      more=1
+      break
+    fi
+    text+=$line$'\n'
+    shown=$((shown + 1))
+    bytes=$((bytes + ${#line} + 1))
+  done <"$out"
+  rm -f "$out" "$out.err"
+  if ((shown == 0)); then
+    if [[ -n $more ]]; then
+      utf8_head "${line:0:MAX_BYTES}"
+      text="$REPLY"$'\n\n'"[Line $lineno is longer than 50KB and was cut.]"
+      TOOL_INFO="1 partial line"
+    elif ((lineno == 0)); then
+      text="(empty manual page)"
+      TOOL_INFO=$text
+    else
+      text="Offset $offset is past the end of the page ($lineno lines)."
+      TOOL_INFO=$text
+    fi
+  else
+    if [[ -n $shown_sec ]]; then TOOL_INFO="$page($shown_sec) · $shown lines"; else TOOL_INFO="$page · $shown lines"; fi
+    if [[ -n $more ]]; then
+      text+=$'\n'"[Showing lines $offset-$((offset + shown - 1)). More lines follow; use offset=$((offset + shown)) to continue.]"
+    fi
+  fi
+  [[ -n $others ]] && text+=$'\n'"[Other sections: $others. Pass section to read one of them.]"
+  TOOL_OUT=$text
+}
+
 tool_subagent() {
   local depth=$1 task rc
   local -a msgs
@@ -1005,6 +1164,13 @@ run_tool() { # name args depth
       read | write | edit) jget path ;;
       bash) jget command ;;
       webfetch) jget url ;;
+      man)
+        jget page || jget name
+        summary=$REPLY
+        jget section
+        [[ -n $REPLY ]] && summary+="($REPLY)"
+        REPLY=$summary
+        ;;
       subagent) jget task ;;
       *) REPLY= ;;
     esac
@@ -1023,6 +1189,7 @@ run_tool() { # name args depth
       edit) tool_edit ;;
       bash) tool_bash ;;
       webfetch) tool_webfetch ;;
+      man) tool_man ;;
       subagent)
         if ((depth < MAX_DEPTH)); then tool_subagent "$depth"; else tool_fail "Subagents cannot nest deeper than $MAX_DEPTH levels."; fi
         ;;
@@ -1059,6 +1226,7 @@ system_prompt() { # main|sub depth
 Available tools:
 - read: Read file contents
 - bash: Run bash commands (ls, find, grep, git, tests, builds)
+- man: Read a manual page (commands, syscalls, library functions)
 - edit: Make surgical edits to files (replace exact text)
 - write: Create or overwrite files
 - webfetch: Fetch a URL and get its content as text"
@@ -1068,6 +1236,7 @@ Available tools:
 
 Guidelines:
 - Use bash for file discovery and search (ls, find, grep, rg).
+- Use man for documentation of a command, syscall, or library function. Pass a section when you know it.
 - Read a file before editing it. oldText in edit must match the file exactly, including whitespace.
 - Use write only for new files or complete rewrites.
 - Be concise. When you change files, say which ones."
@@ -1554,7 +1723,7 @@ Options:
   -h, --help       show this help
   -v, --version    print the version
 
-Tools: read, edit, write, bash, webfetch, subagent.
+Tools: read, edit, write, bash, webfetch, man, subagent.
 EOF
 }
 
