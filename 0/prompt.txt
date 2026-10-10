@@ -1,0 +1,4 @@
+let's add functionality to shyd: forward ai requests to openrouter
+modify shy.sh so that requests go by default to shyd, allow setting custom OPENAI_BASE_URL and OPENAI_API_KEY instead of OPENROUTER_API_KEY
+
+api key wil be in SHY_API_KEY
