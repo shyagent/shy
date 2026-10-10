@@ -1,0 +1,12 @@
+let's add new fucking great functionality to shyd
+
+we collect logs right??
+
+and we know each bash/write/edit command, right???
+
+then we know the state of the VM, right????
+
+
+you see, we can visually map all the services 
+
+do it server-side
