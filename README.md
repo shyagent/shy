@@ -1,5 +1,7 @@
 # shy
 
+<img src="logo.svg" alt="shy" width="180">
+
 A coding agent in one bash file (`shy.sh`). It has no package manifest. These are the dependencies the script actually uses.
 
 ## Required

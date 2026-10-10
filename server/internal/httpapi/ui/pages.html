@@ -6,6 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="htmx-config" content='{"includeIndicatorStyles":false,"historyEnabled":false,"allowEval":false,"allowScriptTags":false,"selfRequestsOnly":true}'>
 <title>{{.Title}}</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/app.css">
 {{if .CSRF}}<meta name="csrf" content="{{.CSRF}}">{{end}}
 </head>
@@ -24,7 +25,7 @@
 {{define "gate"}}
 {{template "top" .}}
 <main class="wrap">
-  <p class="mark">shy</p>
+  <p class="mark"><img src="/static/logo.svg" alt="shy"></p>
   <h1>An account is a number</h1>
   <p class="lede">Sixteen digits. No email and no reset. Sign in, create an agent, and run it. Each run shows up here.</p>
   <div class="grid">
@@ -56,7 +57,7 @@
 {{template "top" .}}
 <main class="wrap">
   <header class="bar">
-    <a class="mark" href="/">shy</a>
+    <a class="mark" href="/"><img src="/static/logo.svg" alt="shy"></a>
     <p class="digits">{{.NumberPretty}}</p>
     <button type="button" class="ghost" data-copy="{{.NumberRaw}}">Copy</button>
     <form class="inline" method="post" action="/logout">
