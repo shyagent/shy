@@ -7,7 +7,7 @@
 #
 # Environment:
 #   OPENROUTER_API_KEY     OpenRouter key (asked for when unset)
-#   SHY_MODEL              model id (default: anthropic/claude-sonnet-5.5)
+#   SHY_MODEL              model id (default: deepseek/deepseek-v4.1-flash)
 #   SHY_MAX_DEPTH          how deep subagents may nest (default: 2)
 #   SHY_MAX_STEPS          model calls per agent run (default: 100)
 #   SHY_BASH_TIMEOUT       default bash tool timeout in seconds (default: 300)
@@ -24,7 +24,7 @@ SHY_VERSION=0.1.0
 # ---------------------------------------------------------------- setup
 
 setup() {
-  MODEL=${SHY_MODEL:-anthropic/claude-sonnet-5.5}
+  MODEL=${SHY_MODEL:-deepseek/deepseek-v4.1-flash}
   MAX_DEPTH=${SHY_MAX_DEPTH:-2}
   MAX_STEPS=${SHY_MAX_STEPS:-100}
   BASH_TIMEOUT=${SHY_BASH_TIMEOUT:-300}
