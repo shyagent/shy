@@ -1,0 +1,99 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4KA4GQ1XYPJEKMFHXTCR56X",
+  "session_id": "965c183c-07e4-4168-adcf-1319253f0104",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T16:25:35.344072Z",
+  "branch": "main",
+  "checkpoints_count": 5,
+  "save_step_count": 5,
+  "files_touched": [
+    "README.md",
+    "server/internal/httpapi/ui/pages.html",
+    "server/internal/httpapi/ui/static/app.css",
+    "server/internal/httpapi/ui/static/logo.svg"
+  ],
+  "agent": "Cursor",
+  "model": "grok-4.7-high-fast",
+  "turn_id": "0ea6e1fbce22",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 232569,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 5210048,
+    "output_tokens": 73294,
+    "api_call_count": 4
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T16:25:35.329633Z",
+    "agent_lines": 11,
+    "agent_removed": 2,
+    "human_added": 0,
+    "human_modified": 4,
+    "human_removed": 0,
+    "total_committed": 15,
+    "total_lines_changed": 17,
+    "agent_percentage": 76.47058823529412,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 24,
+      "agent_lines_removed": 6
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 6,
+      "user_lines_removed": 6,
+      "agent_lines_added": 24,
+      "agent_lines_removed": 6,
+      "user_added_per_file": {
+        "logo-green.svg": 2,
+        "logo.svg": 2,
+        "server/internal/httpapi/ui/static/logo.svg": 2
+      },
+      "user_removed_per_file": {
+        "logo-green.svg": 2,
+        "logo.svg": 2,
+        "server/internal/httpapi/ui/static/logo.svg": 2
+      }
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 6,
+      "user_lines_removed": 6,
+      "agent_lines_added": 24,
+      "agent_lines_removed": 6,
+      "user_added_per_file": {
+        "logo-green.svg": 2,
+        "logo.svg": 2,
+        "server/internal/httpapi/ui/static/logo.svg": 2
+      },
+      "user_removed_per_file": {
+        "logo-green.svg": 2,
+        "logo.svg": 2,
+        "server/internal/httpapi/ui/static/logo.svg": 2
+      }
+    },
+    {
+      "checkpoint_number": 5,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 24,
+      "agent_lines_removed": 6
+    }
+  ]
+}
