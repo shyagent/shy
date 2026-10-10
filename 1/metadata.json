@@ -1,0 +1,60 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4KBNMX6CRS5HGC5DNXADPH1",
+  "session_id": "feb5ae3f-e894-4fbd-a781-5decbc74183d",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T16:52:34.162356Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "shy.sh"
+  ],
+  "agent": "Cursor",
+  "model": "grok-4.7-high-fast",
+  "turn_id": "3b205131a1c9",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 107359,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 2002816,
+    "output_tokens": 57041,
+    "api_call_count": 1
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T16:52:34.155614Z",
+    "agent_lines": 173,
+    "agent_removed": 4,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 173,
+    "total_lines_changed": 177,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 24,
+      "user_lines_removed": 6,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "README.md": 2,
+        "logo-green.svg": 3,
+        "logo.svg": 3,
+        "server/internal/httpapi/ui/pages.html": 3,
+        "server/internal/httpapi/ui/static/app.css": 10,
+        "server/internal/httpapi/ui/static/logo.svg": 3
+      },
+      "user_removed_per_file": {
+        "server/internal/httpapi/ui/pages.html": 2,
+        "server/internal/httpapi/ui/static/app.css": 4
+      }
+    }
+  ]
+}
