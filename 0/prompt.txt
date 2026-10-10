@@ -1,0 +1,5 @@
+pls fix css, everything is different sizes
+
+---
+
+redact account id on all screens

@@ -1,0 +1,85 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4K7WXWM1PXNH6060M59RD7K",
+  "session_id": "4ad17102-8512-4580-9b48-d7d1dedbfeeb",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-10T15:46:29.497687Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "save_step_count": 2,
+  "files_touched": [
+    "README.md",
+    "server/internal/httpapi/chat_test.go",
+    "server/internal/httpapi/handlers.go",
+    "server/internal/httpapi/server_test.go",
+    "server/internal/httpapi/ui/pages.html",
+    "server/internal/httpapi/ui/static/app.css",
+    "server/internal/httpapi/ui/static/app.js",
+    "server/internal/httpapi/view.go",
+    "server/internal/httpapi/view_test.go",
+    "server/internal/store/store.go",
+    "shy.sh"
+  ],
+  "agent": "Cursor",
+  "model": "grok-4.7-high-fast",
+  "turn_id": "a34f571d4bec",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 213163,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 5311488,
+    "output_tokens": 46455,
+    "api_call_count": 2
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-10T15:46:29.488622Z",
+    "agent_lines": 65,
+    "agent_removed": 36,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 62,
+    "total_committed": 65,
+    "total_lines_changed": 163,
+    "agent_percentage": 61.963190184049076,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 213,
+      "user_lines_removed": 62,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "README.md": 3,
+        "server/internal/httpapi/chat_test.go": 4,
+        "server/internal/httpapi/server_test.go": 4,
+        "server/internal/httpapi/ui/pages.html": 54,
+        "server/internal/httpapi/ui/static/app.css": 55,
+        "server/internal/httpapi/ui/static/app.js": 6,
+        "server/internal/httpapi/view.go": 36,
+        "server/internal/httpapi/view_test.go": 19,
+        "server/internal/store/store.go": 1,
+        "shy.sh": 31
+      },
+      "user_removed_per_file": {
+        "README.md": 3,
+        "server/internal/httpapi/ui/pages.html": 31,
+        "server/internal/httpapi/ui/static/app.css": 1,
+        "server/internal/httpapi/view.go": 7,
+        "server/internal/store/store.go": 1,
+        "shy.sh": 19
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 265,
+      "agent_lines_removed": 88
+    }
+  ]
+}
