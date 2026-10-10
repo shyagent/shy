@@ -1,0 +1,20 @@
+# podman compose up -d --build
+#
+# The process runs as root in the container so a new volume can hold the
+# SQLite file. See compose.yaml.
+
+FROM golang:1.27 AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/shyd ./cmd/shyd
+
+FROM gcr.io/distroless/static-debian12
+COPY --from=build /out/shyd /shyd
+USER 0
+VOLUME ["/data"]
+ENV SHY_DB_PATH=/data/shy.db
+ENV SHY_HTTP_ADDR=:8080
+EXPOSE 8080
+ENTRYPOINT ["/shyd"]

@@ -1,0 +1,220 @@
+{{define "top"}}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="htmx-config" content='{"includeIndicatorStyles":false,"historyEnabled":false,"allowEval":false,"allowScriptTags":false,"selfRequestsOnly":true}'>
+<title>{{.Title}}</title>
+<link rel="stylesheet" href="/static/app.css">
+{{if .CSRF}}<meta name="csrf" content="{{.CSRF}}">{{end}}
+</head>
+<body>
+{{end}}
+
+{{define "bottom"}}
+<footer class="foot">shyd {{.Version}} · times are UTC</footer>
+</main>
+<script src="/static/htmx.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
+{{end}}
+
+{{define "gate"}}
+{{template "top" .}}
+<main class="wrap">
+  <p class="mark">shy</p>
+  <h1>Traces for the agent</h1>
+  <p class="lede">shy posts one trace here at the end of each run. This server keeps it and forwards it to Neatlogs. An account is a 16-digit number. Each install has its own key.</p>
+  <div class="grid">
+    <section class="card">
+      <h2>Sign in</h2>
+      <form method="post" action="/login">
+        <input type="hidden" name="form" value="{{.FormToken}}">
+        <label>Account number
+          <input name="number" inputmode="numeric" autocomplete="off" spellcheck="false" autocapitalize="off" maxlength="22" required placeholder="0000 0000 0000 0000">
+        </label>
+        <button class="primary" type="submit">Sign in</button>
+        {{if .LoginError}}<p class="bad" role="alert">{{.LoginError}}</p>{{end}}
+      </form>
+    </section>
+    <section class="card">
+      <h2>New account</h2>
+      <p>The number is the password. There is no email and no reset. If you lose it, the account is gone.</p>
+      <form method="post" action="/accounts">
+        <input type="hidden" name="form" value="{{.FormToken}}">
+        <button class="primary" type="submit">Create account</button>
+      </form>
+      {{if .RegisterError}}<p class="bad" role="alert">{{.RegisterError}}</p>{{end}}
+    </section>
+  </div>
+{{template "bottom" .}}
+{{end}}
+
+{{define "dashboard"}}
+{{template "top" .}}
+<main class="wrap">
+  <header class="bar">
+    <a class="mark" href="/">shy</a>
+    <p class="digits">{{.NumberPretty}}</p>
+    <button type="button" class="ghost" data-copy="{{.NumberRaw}}">Copy</button>
+    <form class="inline" method="post" action="/logout">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <button class="ghost" type="submit">Sign out</button>
+    </form>
+  </header>
+
+  {{if .NewAccount}}
+  <section class="banner">
+    <h2>This is your account</h2>
+    <p class="digits">{{.NumberPretty}}</p>
+    <button type="button" class="ghost" data-copy="{{.NumberRaw}}">Copy number</button>
+    <p>Write it down. It is the only way back in.</p>
+  </section>
+  {{end}}
+
+  <section class="card" id="installs">
+    <h2>Installs</h2>
+    <p class="muted">shy posts to {{.PublicURL}}/v1/trace. Send the install key as <span class="mono">x-api-key</span> to attribute the trace to this account. A request with no key is stored and forwarded as anonymous.</p>
+    {{if .Reveal}}
+    <div class="reveal">
+      <p>Key for {{.Reveal.Name}}. Shown once.</p>
+      <p class="secret">{{.Reveal.Key}}</p>
+      <p>
+        <button type="button" class="ghost" data-copy="{{.Reveal.Key}}">Copy key</button>
+        <button type="button" class="ghost" data-copy="{{.Reveal.Env}}">Copy env</button>
+      </p>
+      <pre class="env">{{.Reveal.Env}}</pre>
+      <p class="muted">Unset any Neatlogs key in that shell. This server forwards with its own key.</p>
+    </div>
+    {{end}}
+    <form class="row" method="post" action="/installs">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <label>Name
+        <input name="name" maxlength="40" placeholder="laptop" autocomplete="off">
+      </label>
+      <button class="primary" type="submit">New install</button>
+    </form>
+    {{if not .Installs}}
+    <p class="muted">No installs yet.</p>
+    {{else}}
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Key</th>
+          <th scope="col">Created</th>
+          <th scope="col">Last seen</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Installs}}
+        <tr>
+          <td>{{.Name}}</td>
+          <td class="mono">{{.Prefix}}…</td>
+          <td class="mono">{{.Created}}</td>
+          <td class="mono">{{.LastSeen}}</td>
+          <td>
+            {{if .Revoked}}
+            <span class="wait">revoked</span>
+            {{else}}
+            <form class="inline" method="post" action="/installs/{{.ID}}/revoke">
+              <input type="hidden" name="csrf" value="{{$.CSRF}}">
+              <button class="ghost" type="submit">Revoke</button>
+            </form>
+            {{end}}
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    {{end}}
+  </section>
+
+  {{template "traces" .}}
+  <div id="detail" aria-live="polite">{{template "detail" .}}</div>
+{{template "bottom" .}}
+{{end}}
+
+{{define "traces"}}
+<section id="traces" class="card" hx-get="/traces" hx-trigger="every 15s" hx-swap="outerHTML">
+  <h2>Traces</h2>
+  {{if not .Traces}}
+  <p class="muted">No traces yet.</p>
+  {{else}}
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">When</th>
+        <th scope="col">Workflow</th>
+        <th scope="col">Status</th>
+        <th scope="col">Tokens</th>
+        <th scope="col">Install</th>
+        <th scope="col">Neatlogs</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Traces}}
+      <tr>
+        <td class="mono">{{.When}}</td>
+        <td><a href="/traces/{{.ID}}" hx-get="/traces/{{.ID}}" hx-target="#detail" hx-swap="innerHTML">{{.Workflow}}</a></td>
+        <td class="{{tone .Status}}">{{.Status}}</td>
+        <td class="mono">{{.Tokens}}</td>
+        <td>{{.Install}}</td>
+        <td class="{{tone .Forward}}">{{.Forward}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  {{end}}
+</section>
+{{end}}
+
+{{define "detail"}}
+{{if .Detail}}
+<article class="detail">
+  <h2>{{.Detail.Workflow}}</h2>
+  <p>
+    <span class="{{tone .Detail.Status}}">{{.Detail.Status}}</span>
+    · {{.Detail.When}}
+    · {{.Detail.Install}}
+    · {{.Detail.Prompt}} in · {{.Detail.Completion}} out
+    · {{.Detail.SpanCount}} spans
+  </p>
+  <p>Session {{.Detail.Session}}</p>
+  <p>Forward <span class="{{tone .Detail.Forward}}">{{.Detail.Forward}}</span> · Neatlogs {{.Detail.NeatlogsID}}</p>
+  {{if .Detail.ForwardError}}<p class="bad">{{.Detail.ForwardError}}</p>{{end}}
+  {{if .Detail.Input}}
+  <h3>Input</h3>
+  <pre class="preview">{{.Detail.Input}}</pre>
+  {{end}}
+  {{if .Detail.Output}}
+  <h3>Output</h3>
+  <pre class="preview">{{.Detail.Output}}</pre>
+  {{end}}
+  {{template "spans" .Detail.Spans}}
+  <details>
+    <summary>Payload</summary>
+    <pre>{{.Detail.Raw}}</pre>
+  </details>
+</article>
+{{end}}
+{{end}}
+
+{{define "spans"}}
+{{if .}}
+<ul class="spans">
+{{range .}}
+  <li>
+    <span class="kind">{{.Kind}}</span>
+    {{.Name}}
+    {{if .Status}}<span class="{{tone .Status}}">{{.Status}}</span>{{end}}
+    {{if .Meta}}<span class="muted">{{.Meta}}</span>{{end}}
+    {{if .Children}}{{template "spans" .Children}}{{end}}
+  </li>
+{{end}}
+</ul>
+{{end}}
+{{end}}
