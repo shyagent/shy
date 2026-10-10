@@ -9,8 +9,6 @@ func TestFromEnvDefaults(t *testing.T) {
 	t.Setenv("SHY_NEATLOGS_API_KEY", "")
 	t.Setenv("SHY_NEATLOGS_PROJECT_NAME", "")
 	t.Setenv("SHY_NEATLOGS_INGEST_URL", "")
-	t.Setenv("SHY_COOKIE_SECURE", "")
-	t.Setenv("SHY_TRUST_PROXY", "")
 	t.Setenv("SHY_BODY_LIMIT", "")
 	cfg, err := FromEnv()
 	if err != nil {

@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -33,9 +32,6 @@ func main() {
 	if err != nil {
 		slog.Error("config", "err", err)
 		os.Exit(1)
-	}
-	if strings.HasPrefix(cfg.PublicURL, "https://") && !cfg.CookieSecure {
-		slog.Warn("SHY_PUBLIC_URL is https but SHY_COOKIE_SECURE is off; the browser will not keep the session cookie")
 	}
 
 	st, err := store.Open(cfg.DBPath)
@@ -116,8 +112,6 @@ Environment:
   SHY_NEATLOGS_API_KEY       project key sent as x-api-key by the Go SDK
   SHY_NEATLOGS_PROJECT_NAME  required for nlw_ write keys; sent as a resource tag
   SHY_NEATLOGS_INGEST_URL    OTLP base URL (default https://ingest.neatlogs.com)
-  SHY_COOKIE_SECURE          1 when the dashboard is served over HTTPS
-  SHY_TRUST_PROXY            1 to rate-limit using X-Forwarded-For
   SHY_BODY_LIMIT             max trace body in bytes (default 8388608, max 52428800)
 `, version.Version)
 }

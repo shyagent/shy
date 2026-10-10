@@ -59,7 +59,7 @@ func (s *Server) gate(w http.ResponseWriter, r *http.Request, loginErr, register
 
 func (s *Server) createAccount(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<16)
-	if !s.signUp.allow(clientIP(r, s.cfg.TrustProxy)) {
+	if !s.signUp.allow(clientIP(r)) {
 		s.gate(w, r, "", "Too many new accounts from this network. Try again later.", http.StatusTooManyRequests)
 		return
 	}
@@ -82,7 +82,7 @@ func (s *Server) createAccount(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<16)
-	if !s.signIn.allow(clientIP(r, s.cfg.TrustProxy)) {
+	if !s.signIn.allow(clientIP(r)) {
 		s.gate(w, r, "Too many sign-in attempts. Wait a few minutes.", "", http.StatusTooManyRequests)
 		return
 	}
@@ -255,13 +255,12 @@ func (s *Server) dashboardView(r *http.Request, sess store.Session, flash store.
 	return buildView(s.cfg, sess, flash, installs, traces), nil
 }
 
-func clientIP(r *http.Request, trust bool) string {
-	if trust {
-		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-			first := strings.TrimSpace(strings.Split(xff, ",")[0])
-			if first != "" {
-				return first
-			}
+// clientIP uses X-Forwarded-For. Caddy replaces that header with the visitor address.
+func clientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		first := strings.TrimSpace(strings.Split(xff, ",")[0])
+		if first != "" {
+			return first
 		}
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)

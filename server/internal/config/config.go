@@ -25,8 +25,6 @@ type Config struct {
 	NeatlogsAPIKey    string
 	NeatlogsProject   string
 	NeatlogsIngestURL string
-	CookieSecure      bool
-	TrustProxy        bool
 	BodyLimit         int64
 }
 
@@ -39,8 +37,6 @@ func FromEnv() (Config, error) {
 		NeatlogsAPIKey:    strings.TrimSpace(os.Getenv("SHY_NEATLOGS_API_KEY")),
 		NeatlogsProject:   strings.TrimSpace(os.Getenv("SHY_NEATLOGS_PROJECT_NAME")),
 		NeatlogsIngestURL: env("SHY_NEATLOGS_INGEST_URL", defaultIngest),
-		CookieSecure:      envBool("SHY_COOKIE_SECURE"),
-		TrustProxy:        envBool("SHY_TRUST_PROXY"),
 	}
 	var err error
 	cfg.BodyLimit, err = envInt("SHY_BODY_LIMIT", defaultBody, maxBody)
@@ -90,15 +86,6 @@ func env(name, fallback string) string {
 		return fallback
 	}
 	return v
-}
-
-func envBool(name string) bool {
-	switch strings.ToLower(strings.TrimSpace(os.Getenv(name))) {
-	case "1", "true", "yes", "on":
-		return true
-	default:
-		return false
-	}
 }
 
 func envInt(name string, fallback, max int64) (int64, error) {

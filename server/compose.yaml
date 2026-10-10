@@ -1,6 +1,5 @@
 # podman compose up -d --build
-# Put SHY_PUBLIC_URL, SHY_NEATLOGS_API_KEY, and SHY_NEATLOGS_PROJECT_NAME
-# (only for an nlw_ write key) in .env next to this file.
+# Plain HTTP for the Caddy proxy already in front. Optional .env: see .env.example.
 
 services:
   shyd:
@@ -11,12 +10,15 @@ services:
       - "127.0.0.1:8080:8080"
     volumes:
       - shy-data:/data
+    env_file:
+      - path: .env
+        required: false
     environment:
       SHY_PUBLIC_URL: ${SHY_PUBLIC_URL:-http://127.0.0.1:8080}
       SHY_NEATLOGS_API_KEY: ${SHY_NEATLOGS_API_KEY:-}
       SHY_NEATLOGS_PROJECT_NAME: ${SHY_NEATLOGS_PROJECT_NAME:-}
       SHY_NEATLOGS_INGEST_URL: ${SHY_NEATLOGS_INGEST_URL:-https://ingest.neatlogs.com}
-      SHY_COOKIE_SECURE: ${SHY_COOKIE_SECURE:-0}
+      SHY_BODY_LIMIT: ${SHY_BODY_LIMIT:-8388608}
     restart: unless-stopped
 
 volumes:

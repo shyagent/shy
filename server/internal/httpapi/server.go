@@ -163,7 +163,6 @@ func (s *Server) setSessionCookie(w http.ResponseWriter, token string) {
 		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
-		Secure:   s.cfg.CookieSecure,
 		MaxAge:   sessionMaxAge,
 	})
 }
@@ -175,7 +174,6 @@ func (s *Server) clearSessionCookie(w http.ResponseWriter) {
 		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
-		Secure:   s.cfg.CookieSecure,
 		MaxAge:   -1,
 	})
 }
@@ -195,7 +193,6 @@ func (s *Server) formToken(w http.ResponseWriter, r *http.Request) string {
 		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
-		Secure:   s.cfg.CookieSecure,
 		MaxAge:   formMaxAge,
 	})
 	return tok
